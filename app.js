@@ -1,10 +1,10 @@
 const path = require('path');
 const express = require('express');
+
 const bodyParser = require('body-parser');
 const errorController = require('./controllers/error');
 
-const sequelize = require('./util/database');
-const Product = require('./models/product');
+const mongoConnect = require('./util/database').mongoConnect;
 const User = require('./models/user');
 
 const app = express();
@@ -17,11 +17,12 @@ const adminRoutes = require('./Routes/admin');
 const shopRoutes = require('./Routes/shop');
 
 
+
 app.use(bodyParser.urlencoded({extended:false}));
 app.use(express.static(path.join(__dirname,'public')))
 
 app.use((req,res,next) =>{
-    User.findByPk(1)
+    User.findById("5fe699664b91eda8edc38f86")
     .then( user => {
         req.user = user;
         next();
@@ -34,26 +35,6 @@ app.use(shopRoutes);
 
 app.use(errorController.get404);
 
-Product.belongsTo( User, { constraints: true, onDelete: 'CASCADE'});
-User.hasMany(Product);
-
-sequelize
-.sync()
-.then( result => {
-    //console.log(result);
-    return User.findByPk(1);
-})
-.then( user => {
-    if(!user){
-        return User.create({ name : 'Chiku', email:'test@test.com'})
-    }
-    return user;
-})
-.then(user => {
-    //console.log(User);
+mongoConnect(() => {
     app.listen(4000);
-})
-.catch(err =>{
-    console.log(err);
 });
-
